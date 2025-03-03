@@ -1,6 +1,6 @@
 {
-  "name": "splicingvariation",
-  "homepage": "https://alevar.github.io/SplicingVariationPlot",
+  "name": "chimviz",
+  "homepage": "https://alevar.github.io/ChimViz",
   "private": true,
   "version": "0.0.0",
   "type": "module",

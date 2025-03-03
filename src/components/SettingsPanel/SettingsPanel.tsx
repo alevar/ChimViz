@@ -4,15 +4,14 @@ import { InfoCircle } from "react-bootstrap-icons";
 import "./SettingsPanel.css";
 
 interface SettingsPanelProps {
-    gtfStatus: number;
-    onGTFUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
-    donorsStatus: number;
-    acceptorsStatus: number;
-    onBEDUpload: (type: 'donors' | 'acceptors', event: React.ChangeEvent<HTMLInputElement>) => void;
-    zoomWidth: number;
-    onZoomWidthChange: (value: number) => void;
-    zoomWindowWidth: number;
-    onZoomWindowWidthChange: (value: number) => void;
+    densityStatus: number;
+    onDensityUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    faiStatus: number;
+    onFaiUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    pathogenGtfStatus: number;
+    onPathogenGTFUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    integrationsStatus: number;
+    onIntegrationsUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
     fontSize: number;
     onFontSizeChange: (value: number) => void;
     width: number;
@@ -22,15 +21,14 @@ interface SettingsPanelProps {
 }
 
 const SettingsPanel: React.FC<SettingsPanelProps> = ({
-    gtfStatus,
-    onGTFUpload,
-    donorsStatus,
-    acceptorsStatus,
-    onBEDUpload,
-    zoomWidth,
-    onZoomWidthChange,
-    zoomWindowWidth,
-    onZoomWindowWidthChange,
+    densityStatus,
+    onDensityUpload,
+    faiStatus,
+    onFaiUpload,
+    pathogenGtfStatus,
+    onPathogenGTFUpload,
+    integrationsStatus,
+    onIntegrationsUpload,
     fontSize,
     onFontSizeChange,
     width,
@@ -40,6 +38,26 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
 }) => {
     // Help tooltip content for each file type
     const tooltips = {
+        densities: (
+            <Tooltip id="density-tooltip" className="tooltip-hover">
+                <strong>Density File Format Example (BED):</strong>
+                <pre style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>
+                    {''}
+                </pre>
+                <div>BED file containing gene densities for each sequence identifier. Gene densities should be provided in the score column. Strand is ignored.</div>
+            </Tooltip>
+        ),
+        fai: (
+            <Tooltip id="fai-tooltip" className="tooltip-hover">
+                <strong>Fasta Index (FAI) File Format Example:</strong>
+                <pre style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>
+                    {'chr1\t248956422\t6\t50\t51\n' +
+                     'chr10\t133797422\t253935564\t50\t51\n' +
+                     'chr11\t135086622\t390408942\t50\t51'}
+                </pre>
+                <div>Fasta index file.</div>
+            </Tooltip>
+        ),
         gtf: (
             <Tooltip id="gtf-tooltip" className="tooltip-hover">
                 <strong>GTF File Format Example:</strong>
@@ -50,26 +68,13 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 <div>GTF files contain gene annotations with 9 tab-separated columns.</div>
             </Tooltip>
         ),
-        donors: (
-            <Tooltip id="donors-tooltip" className="tooltip-hover">
-                <strong>Donors SJ File Example:</strong>
+        integrations: (
+            <Tooltip id="integrations-tooltip" className="tooltip-hover">
+                <strong>Integration Sites File Format Example:</strong>
                 <pre style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>
-                    {'seqid\tposition\tA\tC\tG\tT\tN\n' +
-                    'K03455.1\t738\t11\t2\t2051\t13\t0\n' +
-                    'K03455.1\t739\t1652\t7\t406\t8\t4'}
+                    {'genome1_seqid\tgenome2_seqid\tgenome1_breakpoint\tgenome2_breakpoint\tcount\tjunction1\tjunction2\tgene1'}
                 </pre>
-                <div>Donor splice junction files contain genomic coordinates and data for each nucleotide. Expects header.</div>
-            </Tooltip>
-        ),
-        acceptors: (
-            <Tooltip id="acceptors-tooltip" className="tooltip-hover">
-                <strong>Acceptors SJ File Example:</strong>
-                <pre style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>
-                {'seqid\tposition\tA\tC\tG\tT\tN\n' +
-                    'K03455.1\t738\t11\t2\t2051\t13\t0\n' +
-                    'K03455.1\t739\t1652\t7\t406\t8\t4'}
-                </pre>
-                <div>Acceptor splice junction files contain genomic coordinates and data for each nucleotide. Expects header.</div>
+                <div>File describing integration events between two genomes.</div>
             </Tooltip>
         ),
     };
@@ -128,54 +133,41 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 <Card.Body className="settings-body">
                     <Card.Title className="settings-title">Settings</Card.Title>
                     <Form>
-                        {/* GTF Upload with help tooltip */}
                         <UploadFieldWithHelp
-                            id="gtfUpload"
+                            id="densityBedUpload"
+                            label="Densities BED"
+                            onChange={(e) => onDensityUpload(e)}
+                            errorStatus={densityStatus}
+                            errorMessage="Error parsing densities file"
+                            tooltipContent={tooltips.densities}
+                        />
+
+                        <UploadFieldWithHelp
+                            id="faiUpload"
+                            label="Fasta Index"
+                            onChange={(e) => onFaiUpload(e)}
+                            errorStatus={faiStatus}
+                            errorMessage="Error parsing fasta index file"
+                            tooltipContent={tooltips.fai}
+                        />
+
+                        <UploadFieldWithHelp
+                            id="pathogenGtfUpload"
                             label="Pathogen GTF"
-                            onChange={onGTFUpload}
-                            errorStatus={gtfStatus}
+                            onChange={onPathogenGTFUpload}
+                            errorStatus={pathogenGtfStatus}
                             errorMessage="Error parsing GTF file"
                             tooltipContent={tooltips.gtf}
                         />
 
-                        {/* Donors SJ Upload with help tooltip */}
                         <UploadFieldWithHelp
-                            id="donorsBedUpload"
-                            label="Donors BED"
-                            onChange={(e) => onBEDUpload("donors", e)}
-                            errorStatus={donorsStatus}
-                            errorMessage="Error parsing donors file"
-                            tooltipContent={tooltips.donors}
+                            id="integrationsUpload"
+                            label="Integrations"
+                            onChange={onIntegrationsUpload}
+                            errorStatus={integrationsStatus}
+                            errorMessage="Error parsing integrations file"
+                            tooltipContent={tooltips.integrations}
                         />
-
-                        {/* Acceptors SJ Upload with help tooltip */}
-                        <UploadFieldWithHelp
-                            id="acceptorsBedUpload"
-                            label="Acceptors BED"
-                            onChange={(e) => onBEDUpload("acceptors", e)}
-                            errorStatus={acceptorsStatus}
-                            errorMessage="Error parsing acceptors file"
-                            tooltipContent={tooltips.acceptors}
-                        />
-
-                        {/* Numeric input fields */}
-                        <Form.Group controlId="zoomWidth" className="mb-3">
-                            <Form.Label>Zoom Width</Form.Label>
-                            <Form.Control
-                                type="number"
-                                value={zoomWidth}
-                                onChange={(e) => onZoomWidthChange(Number(e.target.value))}
-                            />
-                        </Form.Group>
-
-                        <Form.Group controlId="zoomWindowWidth" className="mb-3">
-                            <Form.Label>Zoom Window Width</Form.Label>
-                            <Form.Control
-                                type="number"
-                                value={zoomWindowWidth}
-                                onChange={(e) => onZoomWindowWidthChange(Number(e.target.value))}
-                            />
-                        </Form.Group>
 
                         <Form.Group controlId="fontSize" className="mb-3">
                             <Form.Label>Font Size</Form.Label>
