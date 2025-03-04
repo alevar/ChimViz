@@ -1,216 +1,96 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 import "./Home.css";
 
 import SettingsPanel from "../SettingsPanel/SettingsPanel";
 import ErrorModal from "../ErrorModal/ErrorModal";
-import SplicePlotWrapper from "../SplicePlot/SplicePlotWrapper";
+import ChimVizPlotWrapper from "../ChimVizPlot/ChimVizPlotWrapper";
 
-import { parseBed, BedFile, BedData, Transcriptome } from 'sparrowgenomelib';
+import { parseFai, FaiFile, FaiData, parseIntegrations, IntegrationsFile, IntegrationsData, parseBed, BedFile, BedData, Transcriptome } from 'sparrowgenomelib';
 
-export interface FaiLine {
-    seqid: string;
-    seq_length: number;
-    offset: number;
-    lineBases: number;
-    lineBytes: number;
-}
-export class FaiData {
-    private data: FaiLine[];
-
-    constructor() {
-        this.data = [];
-    }
-
-    public addLine(line: FaiLine): void {
-        this.data.push(line);
-    }
-
-    public get length(): number {
-        return this.data.length;
-    }
-
-    public numEntries(): number {
-        return this.data.length;
-    }
-
-    public getData(): FaiLine[] {
-        return this.data;
-    }
-}
-
-export function parseFai(faiFileName: File): Promise<FaiFile> {
-    return new Promise((resolve, reject) => {
-        const faiFile: FaiFile = {
-            data: new FaiData(),
-            fileName: faiFileName.name,
-            status: 1,
-        };
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const result = e.target?.result as string;
-                const lines = result.split('\n');
-                lines.forEach((line) => {
-                    // skip empty lines
-                    if (line.trim() === '') {
-                        return;
-                    }
-                    const fields = line.split('\t');
-                    if (fields.length === 6) {
-                        const [seqid, seq_length, offset, lineBases, lineBytes] = fields;
-                        const faiLine: FaiLine = {
-                            seqid: seqid,
-                            seq_length: parseInt(seq_length),
-                            offset: parseInt(offset),
-                            lineBases: parseInt(lineBases),
-                            lineBytes: parseInt(lineBytes),
-                        };
-                        faiFile.data.addLine(faiLine);
-                    } else {
-                        throw new Error(`Invalid line format: ${line}`);
-                    }
-                });
-                resolve(faiFile);
-            } catch (error) {
-                reject(new Error('Failed to parse Fasta Index file'));
-            }
-        };
-        reader.onerror = () => {
-            reject(new Error('Failed to read the file'));
-        };
-        reader.readAsText(faiFileName);
-    });
-}
-
-export interface FaiFile {
-    data: FaiData;
+interface TranscriptomeFile {
+    data: Transcriptome;
     fileName: string;
-    status: 1 | 0 | -1; // valid | parsing | error
-}
-
-export interface IntegrationsLine {
-    seqid1: string;
-    seqid2: string;
-    position1: number;
-    position2: number;
-    score: number;
-    junction1?: string;
-    junction2?: string;
-    gene1?: string;
-}
-export class IntegrationsData {
-    private data: IntegrationsLine[];
-
-    constructor() {
-        this.data = [];
-    }
-
-    public addLine(line: IntegrationsLine): void {
-        this.data.push(line);
-    }
-
-    public get length(): number {
-        return this.data.length;
-    }
-
-    public numEntries(): number {
-        return this.data.length;
-    }
-
-    public getData(): IntegrationsLine[] {
-        return this.data;
-    }
-}
-
-export function parseIntegrations(integrationsFileName: File): Promise<IntegrationsFile> {
-    return new Promise((resolve, reject) => {
-        const integrationsFile: IntegrationsFile = {
-            data: new IntegrationsData(),
-            fileName: integrationsFileName.name,
-            status: 1,
-        };
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const result = e.target?.result as string;
-                const lines = result.split('\n');
-                lines.forEach((line) => {
-                    // skip empty lines
-                    if (line.trim() === '') {
-                        return;
-                    }
-                    const fields = line.split('\t');
-                    if (fields.length === 6) {
-                        const [seqid1, position1, seqid2, position2, score, junction1, junction2, gene1] = fields;
-
-                        const integrationsLine: IntegrationsLine = {
-                            seqid1: seqid1,
-                            position1: parseInt(position1),
-                            seqid2: seqid2,
-                            position2: parseInt(position2),
-                            score: parseInt(score),
-                        };
-
-                        // Add optional fields if they exist
-                        if (junction1) integrationsLine.junction1 = junction1;
-                        if (junction2) integrationsLine.junction2 = junction2;
-                        if (gene1) integrationsLine.gene1 = gene1;
-
-                        integrationsFile.data.addLine(integrationsLine);
-                    } else {
-                        throw new Error(`Invalid line format: ${line}`);
-                    }
-                });
-                resolve(integrationsFile);
-            } catch (error) {
-                reject(new Error('Failed to parse Integrations file'));
-            }
-        };
-        reader.onerror = () => {
-            reject(new Error('Failed to read the file'));
-        };
-        reader.readAsText(integrationsFileName);
-    });
-}
-
-export interface IntegrationsFile {
-    data: IntegrationsData;
-    fileName: string;
-    status: 1 | 0 | -1; // valid | parsing | error
+    status: 1 | 0 | -1;
 }
 
 const Home: React.FC = () => {
-    const [transcriptome, setTranscriptome] = useState<Transcriptome>(new Transcriptome());
+    const [hasUpdatedTranscriptome, setHasUpdatedTranscriptome] = useState(false); // Track updates
+    const [pathogenGTF, setPathogenGTF] = useState<TranscriptomeFile>({data: new Transcriptome(), fileName: "", status: 0});
     const [fontSize, setFontSize] = useState<number>(10);
     const [width, setWidth] = useState<number>(1100);
     const [height, setHeight] = useState<number>(700);
-    const [densities, setDensities] = useState<{
-        data: BedData;
-        fileName: string;
-        status: number;
-    }>({data: new BedData(), fileName: "", status: 0});
-    const [fai, setFai] = useState<{
-        data: FaiData;
-        fileName: string;
-        status: number;
-    }>({data: new FaiData(), fileName: "", status: 0});
-    const [integrations, setIntegrations] = useState<{
-        data: IntegrationsData;
-        fileName: string;
-        status: number;
-    }>({data: new IntegrationsData(), fileName: "", status: 0});
+    const [densities, setDensities] = useState<BedFile>({data: new BedData(), fileName: "", status: 0});
+    const [hostFai, setHostFai] = useState<FaiFile>({data: new FaiData(), fileName: "", status: 0});
+    const [pathFai, setPathFai] = useState<FaiFile>({data: new FaiData(), fileName: "", status: 0});
+    const [integrations, setIntegrations] = useState<IntegrationsFile>({data: new IntegrationsData(), fileName: "", status: 0});
     const [errorModalVisible, setErrorModalVisible] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+
+    useEffect(() => {
+        if (pathogenGTF.status === 1 && pathFai.status === 1 && !hasUpdatedTranscriptome) {
+            updateTranscriptomeWithFaiData();
+            setHasUpdatedTranscriptome(true); // Mark as updated
+        }
+    }, [pathogenGTF.status, pathFai.status, hasUpdatedTranscriptome]);
+
+    const updateTranscriptomeWithFaiData = () => {
+        if (pathogenGTF.status !== 1 || pathFai.status !== 1) return;
+
+        try {
+            const currentTranscriptome = pathogenGTF.data;
+            const seqId = currentTranscriptome.seqid;
+
+            if (!seqId) return;
+
+            const faiEntry = pathFai.data.getData().find(entry => entry.seqid === seqId);
+
+            if (!faiEntry) {
+                setErrorMessage(`Error: Could not find sequence '${seqId}' in the pathogen FAI file.`);
+                setErrorModalVisible(true);
+                return;
+            }
+
+            const updatedTranscriptome = Transcriptome.fromExisting(currentTranscriptome);
+            updatedTranscriptome.start = 0;
+            updatedTranscriptome.end = faiEntry.seq_length;
+
+
+            console.log(pathogenGTF.data.start, pathogenGTF.data.end);
+            console.log(faiEntry.seq_length);
+            console.log(updatedTranscriptome.start, updatedTranscriptome.end);
+
+            setPathogenGTF({
+                ...pathogenGTF,
+                data: updatedTranscriptome
+            });
+        } catch (error) {
+            setErrorMessage("Error updating transcriptome with FAI data: " + (error instanceof Error ? error.message : String(error)));
+            setErrorModalVisible(true);
+        }
+    };
 
     const handlePathogenGtfUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
             try {
-                const txdata = await Transcriptome.create(file);
-                setTranscriptome(txdata);
+                let txdata = await Transcriptome.create(file);
+                setPathogenGTF({
+                    data: txdata,
+                    fileName: file.name,
+                    status: 1
+                });
+                
+                // If pathogen FAI is already loaded, update the transcriptome immediately
+                if (pathFai.status === 1) {
+                    setTimeout(() => updateTranscriptomeWithFaiData(), 0);
+                }
             } catch (error) {
-                setTranscriptome(new Transcriptome());
+                setPathogenGTF({
+                    data: new Transcriptome(),
+                    fileName: "",
+                    status: -1
+                });
                 setErrorMessage("Unable to parse the file. Please make sure the file is in GTF format. Try to run gffread -T to prepare your file.");
                 setErrorModalVisible(true);
             }
@@ -241,18 +121,45 @@ const Home: React.FC = () => {
         }
     };
 
-    const handleFaiUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleHostFaiUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
             try {
                 const faiFile: FaiFile = await parseFai(file);
-                setFai({
+                setHostFai({
                     data: faiFile.data,
                     fileName: file.name,
                     status: 1
                 });
             } catch (error) {
-                setFai({
+                setHostFai({
+                    data: new FaiData(),
+                    fileName: "",
+                    status: -1
+                });
+                setErrorMessage("Unable to parse the file. Please make sure the file is in Fasta Index format.");
+                setErrorModalVisible(true);
+            }
+        }
+    };
+
+    const handlePathFaiUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            try {
+                const faiFile: FaiFile = await parseFai(file);
+                setPathFai({
+                    data: faiFile.data,
+                    fileName: file.name,
+                    status: 1
+                });
+                
+                // If pathogen GTF is already loaded, update the transcriptome immediately
+                if (pathogenGTF.status === 1) {
+                    setTimeout(() => updateTranscriptomeWithFaiData(), 0);
+                }
+            } catch (error) {
+                setPathFai({
                     data: new FaiData(),
                     fileName: "",
                     status: -1
@@ -292,12 +199,14 @@ const Home: React.FC = () => {
     return (
         <div className="splicemap-plot">
             <SettingsPanel
-                pathogenGtfStatus={1}
+                pathogenGtfStatus={pathogenGTF.status}
                 onPathogenGTFUpload={handlePathogenGtfUpload}
                 densityStatus={densities.status}
                 onDensityUpload={handleDensityFileUpload}
-                faiStatus={fai.status}
-                onFaiUpload={handleFaiUpload}
+                hostFaiStatus={hostFai.status}
+                onHostFaiUpload={handleHostFaiUpload}
+                pathFaiStatus={pathFai.status}
+                onPathFaiUpload={handlePathFaiUpload}
                 integrationsStatus={integrations.status}
                 onIntegrationsUpload={handleIntegrationsUpload}
                 fontSize={fontSize}
@@ -308,17 +217,18 @@ const Home: React.FC = () => {
                 onHeightChange={setHeight}
             />
 
-            {/* <div className="visualization-container">
-                <SplicePlotWrapper
-                    transcriptome={transcriptome}
-                    bedFiles={bedFiles}
-                    zoomWidth={zoomWidth}
-                    zoomWindowWidth={zoomWindowWidth}
+            <div className="visualization-container">
+                <ChimVizPlotWrapper
+                    pathogenGTF={pathogenGTF.data}
+                    densities={densities}
+                    hostFai={hostFai}
+                    pathFai={pathFai}
+                    integrations={integrations}
                     width={width}
                     height={height}
                     fontSize={fontSize}
                 />
-            </div> */}
+            </div>
 
             <ErrorModal
                 visible={errorModalVisible}

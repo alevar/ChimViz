@@ -6,8 +6,10 @@ import "./SettingsPanel.css";
 interface SettingsPanelProps {
     densityStatus: number;
     onDensityUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
-    faiStatus: number;
-    onFaiUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    hostFaiStatus: number;
+    onHostFaiUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    pathFaiStatus: number;
+    onPathFaiUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
     pathogenGtfStatus: number;
     onPathogenGTFUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
     integrationsStatus: number;
@@ -23,8 +25,10 @@ interface SettingsPanelProps {
 const SettingsPanel: React.FC<SettingsPanelProps> = ({
     densityStatus,
     onDensityUpload,
-    faiStatus,
-    onFaiUpload,
+    hostFaiStatus,
+    onHostFaiUpload,
+    pathFaiStatus,
+    onPathFaiUpload,
     pathogenGtfStatus,
     onPathogenGTFUpload,
     integrationsStatus,
@@ -40,14 +44,14 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
     const tooltips = {
         densities: (
             <Tooltip id="density-tooltip" className="tooltip-hover">
-                <strong>Density File Format Example (BED):</strong>
+                <strong>Host Gene Density File Format Example (BED):</strong>
                 <pre style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>
                     {''}
                 </pre>
                 <div>BED file containing gene densities for each sequence identifier. Gene densities should be provided in the score column. Strand is ignored.</div>
             </Tooltip>
         ),
-        fai: (
+        host_fai: (
             <Tooltip id="fai-tooltip" className="tooltip-hover">
                 <strong>Fasta Index (FAI) File Format Example:</strong>
                 <pre style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>
@@ -58,7 +62,18 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 <div>Fasta index file.</div>
             </Tooltip>
         ),
-        gtf: (
+        path_fai: (
+            <Tooltip id="fai-tooltip" className="tooltip-hover">
+                <strong>Fasta Index (FAI) File Format Example:</strong>
+                <pre style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>
+                    {'chr1\t248956422\t6\t50\t51\n' +
+                     'chr10\t133797422\t253935564\t50\t51\n' +
+                     'chr11\t135086622\t390408942\t50\t51'}
+                </pre>
+                <div>Fasta index file.</div>
+            </Tooltip>
+        ),
+        path_gtf: (
             <Tooltip id="gtf-tooltip" className="tooltip-hover">
                 <strong>GTF File Format Example:</strong>
                 <pre style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>
@@ -135,7 +150,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     <Form>
                         <UploadFieldWithHelp
                             id="densityBedUpload"
-                            label="Densities BED"
+                            label="Host Gene Densities BED"
                             onChange={(e) => onDensityUpload(e)}
                             errorStatus={densityStatus}
                             errorMessage="Error parsing densities file"
@@ -143,21 +158,29 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                         />
 
                         <UploadFieldWithHelp
-                            id="faiUpload"
-                            label="Fasta Index"
-                            onChange={(e) => onFaiUpload(e)}
-                            errorStatus={faiStatus}
-                            errorMessage="Error parsing fasta index file"
-                            tooltipContent={tooltips.fai}
+                            id="hostFaiUpload"
+                            label="Host Fasta Index"
+                            onChange={(e) => onHostFaiUpload(e)}
+                            errorStatus={hostFaiStatus}
+                            errorMessage="Error parsing host fasta index file"
+                            tooltipContent={tooltips.host_fai}
                         />
 
+                        <UploadFieldWithHelp
+                            id="pathFaiUpload"
+                            label="Pathogen Fasta Index"
+                            onChange={(e) => onPathFaiUpload(e)}
+                            errorStatus={pathFaiStatus}
+                            errorMessage="Error parsing pathogen fasta index file"
+                            tooltipContent={tooltips.path_fai}
+                        />
                         <UploadFieldWithHelp
                             id="pathogenGtfUpload"
                             label="Pathogen GTF"
                             onChange={onPathogenGTFUpload}
                             errorStatus={pathogenGtfStatus}
                             errorMessage="Error parsing GTF file"
-                            tooltipContent={tooltips.gtf}
+                            tooltipContent={tooltips.path_gtf}
                         />
 
                         <UploadFieldWithHelp

@@ -1,24 +1,27 @@
 import React, { useRef, useEffect } from 'react';
 import * as d3 from 'd3';
 
-import { Transcriptome, BedFile } from 'sparrowgenomelib';
-import { SplicePlot } from './SplicePlot';
+import { FaiFile, IntegrationsFile, Transcriptome, BedFile } from 'sparrowgenomelib';
 
-interface SplicePlotWrapperProps {
-    transcriptome: Transcriptome;
-    bedFiles: {donors: BedFile, acceptors: BedFile};
-    zoomWidth: number;
-    zoomWindowWidth: number;
+import { ChimVizPlot } from './ChimVizPlot';
+
+interface ChimVizPlotWrapperProps {
+    pathogenGTF: Transcriptome;
+    densities: BedFile;
+    hostFai: FaiFile;
+    pathFai: FaiFile;
+    integrations: IntegrationsFile;
     width: number;
     height: number;
     fontSize: number;
 }
 
-const SplicePlotWrapper: React.FC<SplicePlotWrapperProps> = ({ 
-    transcriptome,
-    bedFiles: bedFiles, 
-    zoomWidth, 
-    zoomWindowWidth,
+const ChimVizPlotWrapper: React.FC<ChimVizPlotWrapperProps> = ({ 
+    pathogenGTF,
+    densities,
+    hostFai,
+    pathFai,
+    integrations,
     width, 
     height, 
     fontSize 
@@ -34,7 +37,7 @@ const SplicePlotWrapper: React.FC<SplicePlotWrapperProps> = ({
 
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'splice_plot.svg';
+            a.download = 'chimviz_plot.svg';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -47,16 +50,17 @@ const SplicePlotWrapper: React.FC<SplicePlotWrapperProps> = ({
         const svg = d3.select(svgRef.current);
         svg.selectAll("*").remove();
         
-        const splicePlot = new SplicePlot(svg, { 
-            transcriptome,
-            bedFiles: bedFiles, 
-            zoomWidth, 
-            zoomWindowWidth,
+        const chimVizPlot = new ChimVizPlot(svg, { 
+            pathogenGTF,
+            densities,
+            hostFai,
+            pathFai,
+            integrations,
             width, 
             height, 
             fontSize });
-        splicePlot.plot();
-    }, [transcriptome, bedFiles, zoomWidth, zoomWindowWidth, width, height, fontSize]);
+        chimVizPlot.plot();
+    }, [pathogenGTF, densities, hostFai, pathFai, integrations, width, height, fontSize]);
 
     return (
         <div>
@@ -66,4 +70,4 @@ const SplicePlotWrapper: React.FC<SplicePlotWrapperProps> = ({
     );
 };
 
-export default SplicePlotWrapper;
+export default ChimVizPlotWrapper;
