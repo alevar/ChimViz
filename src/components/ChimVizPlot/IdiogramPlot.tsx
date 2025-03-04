@@ -25,6 +25,7 @@ export class IdiogramPlot {
     private densities: BedData;
     private fai: FaiData;
     private grid: D3Grid;
+    private fontSize: number;
     
     constructor(
         svg: d3.Selection<SVGSVGElement, unknown, null, undefined>,
@@ -35,6 +36,9 @@ export class IdiogramPlot {
         this.colorScale = data.colorScale ?? d3.scaleSequential(d3.interpolateViridis).domain([0, 1]);
         this.densities = data.densities.data;
         this.fai = data.fai.data;
+        
+        // Extract fontSize, with a default if not provided
+        this.fontSize = data.dimensions.fontSize ?? 12;
 
         // Get sequence lengths
         const faiData = this.fai.getData();
@@ -170,7 +174,7 @@ export class IdiogramPlot {
         // Build a colored rectangle for each chromosome on the grid
         const faiData = this.fai.getData();
         faiData.forEach((line, index) => {
-            const cellSvg = this.grid.getCellSvg(index, 0); // Assuming single row grid
+            const cellSvg = this.grid.getCellSvg(index, 0);
             if (cellSvg) {
                 const dimensions = this.grid.getCellDimensions(index, 0);
                 const cellWidth = dimensions?.width || 0;
@@ -199,13 +203,13 @@ export class IdiogramPlot {
                     .style("stroke", "white")
                     .style("stroke-width", "1px");
                 
-                // Add chromosome label
+                // Add chromosome label with explicit fontSize
                 cellSvg.append("text")
                     .attr("x", cellWidth / 2)
                     .attr("y", cellHeight / 2)
                     .attr("text-anchor", "middle")
                     .attr("dominant-baseline", "middle")
-                    .style("font-size", this.dimensions['fontSize'])
+                    .style("font-size", `${this.fontSize}px`)  // Use explicit fontSize property
                     .style("fill", "white")
                     .text(line.seqid);
             }
