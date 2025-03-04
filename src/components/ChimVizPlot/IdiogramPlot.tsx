@@ -96,8 +96,6 @@ export class IdiogramPlot {
         seqid: string,
         length: number,
         densityEntries: Array<{start: number; end: number; score: number}>,
-        cellWidth: number,
-        cellHeight: number
     ): string {
         // Generate unique ID for the gradient
         const gradientId = `density-gradient-${seqid}`;
@@ -187,12 +185,10 @@ export class IdiogramPlot {
                     line.seqid,
                     line.seq_length,
                     chromosomeDensities,
-                    cellWidth,
-                    cellHeight
                 );
                 
                 // Draw chromosome rectangle with gradient fill
-                const rect = cellSvg.append("rect")
+                cellSvg.append("rect")
                     .attr("x", 0)
                     .attr("y", 0)
                     .attr("width", cellWidth)
@@ -204,7 +200,7 @@ export class IdiogramPlot {
                     .style("stroke-width", "1px");
                 
                 // Add chromosome label
-                const text = cellSvg.append("text")
+                cellSvg.append("text")
                     .attr("x", cellWidth / 2)
                     .attr("y", cellHeight / 2)
                     .attr("text-anchor", "middle")

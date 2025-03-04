@@ -8,7 +8,6 @@ import {
     IntegrationsData,
     BedFile,
     BedData,
-    BedLine,
     D3Grid,
     GridConfig,
     ORFPlot,
@@ -154,14 +153,6 @@ export class ChimVizPlot {
         const pathogenGenomePlotSvg = this.grid.getCellSvg(0, 3);
         if (pathogenGenomePlotSvg) {
             const dimensions = this.grid.getCellDimensions(0, 3);
-
-            const pathogenGenomePlotDimensions = {
-                width: dimensions?.width || 0,
-                height: dimensions?.height || 0,
-                x: 0,
-                y: 0,
-                fontSize: this.fontSize,
-            };
             
             // draw rectangle with rounded corners over the entire cell
             pathogenGenomePlotSvg.append("rect")

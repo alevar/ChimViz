@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import { Dimensions, IntegrationsFile, IntegrationsData, IntegrationsLine, FaiFile, FaiData, FaiLine } from 'sparrowgenomelib';
+import { Dimensions, IntegrationsFile, IntegrationsData, FaiFile, FaiData } from 'sparrowgenomelib';
 import { PlotUtilities } from './PlotUtilities';
 
 interface ConnectorPlotData {

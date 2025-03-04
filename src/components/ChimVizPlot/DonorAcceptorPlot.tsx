@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import { FaiFile, FaiData } from 'sparrowgenomelib';
+import { FaiData } from 'sparrowgenomelib';
 import { Transcriptome } from 'sparrowgenomelib';
 import { Interval, computeMidpoint } from 'sparrowgenomelib';
 import { 
